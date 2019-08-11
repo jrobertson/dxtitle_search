@@ -7,7 +7,7 @@ require 'dynarex'
 
 class DxTitleSearch
 
-  def initialize(obj=nil, sources: nil, debug: false)
+  def initialize(obj=nil, sources: obj, debug: false)
 
     @debug = debug
 
@@ -81,6 +81,11 @@ class DxTitleSearch
 
     return a3
 
+  end
+  
+  def tag_search(keywords)
+    a = @a.flat_map {|x| x.split(/#/,2).last.split(/\s*#/)}
+    a.grep(/^#{keywords}/i).map(&:downcase).uniq
   end
   
   private
