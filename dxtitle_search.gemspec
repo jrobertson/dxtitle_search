@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'dxtitle_search'
-  s.version = '0.2.1'
+  s.version = '0.2.2'
   s.summary = 'Search title entries from plain text (derived from a Dynarex document).'
   s.authors = ['James Robertson']
   s.files = Dir['lib/dxtitle_search.rb']

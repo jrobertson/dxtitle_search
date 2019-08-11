@@ -73,7 +73,7 @@ class DxTitleSearch
       rawtime, title = line.split(/ +/,2)
       puts 'title: ' + title.inspect if @debug
 
-      {title: title, url: @h[line], date: Time.at(rawtime.to_i)}
+      {title: title, url: @h[line].chomp, date: Time.at(rawtime.to_i)}
 
     end
 
