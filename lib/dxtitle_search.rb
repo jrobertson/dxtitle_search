@@ -2,102 +2,54 @@
 
 # file: dxtitle_search.rb
 
-require 'dynarex'
+require 'indexer101'
 
 
 class DxTitleSearch
 
-  def initialize(obj=nil, sources: obj, debug: false)
+  def initialize(obj=nil, sources: nil, debug: false)
 
     @debug = debug
+    @indexer = Indexer101.new debug: debug
 
     s = if sources then
     
-      dx = Dynarex.new(sources)
-      dx.all.map {|x| read x.uri }.join
+      dx = Dynarex.new(sources)      
+      @indexer.scan_dxindex dx.all.map(&:uri), level: 1
     
-    elsif obj then
-      
-      # is it a Dynarex file location?
-      if obj.lines.length < 2 then
+    elsif obj and obj.lines.length < 2 
 
-        read obj
-
-      else
+      @indexer.scan_dxindex  obj, level: 1
         
-        obj
-        
-      end
     end
   
-    @h = h = s.lines.inject({}) do |r,x|
-      key, value = x.split(/\s+(?=[^\s]+$)/,2)
-      r.merge(key.rstrip => value)
-    end
-
-    @a = h.keys
+    @indexer.build
 
   end
 
-  def search(keywords)
-    
-    phrases = @a.grep /#{keywords}/i
+  def search(keywords)    
 
-    # find out the keywords count for each entry found
-    a0 = keywords.split.flat_map do |x| 
-      next if @a.length < 2
-      @a.grep /#{x}/i 
-    end
-    
-    a = a0.uniq.map do |entry|
-      [entry, entry.scan(/#{keywords.split.join('|')}/).uniq.count]
-    end
-
-    # sort by keywords found per entry and then date
-    #a2 = (phrases + a).uniq.sort do |x, x2|
-    a2 = a.sort do |x, x2| 
-      -([x.last, x.first[/^\d+/], ] <=> [x2.last, x2.first[/^\d+/]])
-    end
-
+    a2 = @indexer.search keywords.split(/[\s:"!\?\(\)£]+(?=[\w#_'-]+)/)
     # format each result as a Hash object
-    a3 = (phrases + a2).map do |x|
+    a3 = a2.map do |date, title, url|
 
-      if x.length > 1 then
-        line, _ = x
-      else
-        line = x
-      end
-      
-      puts 'line: ' + line.inspect if @debug
-     
-      rawtime, title = line.split(/ +/,2)
-      puts 'title: ' + title.inspect if @debug
-
-      {title: title, url: @h[line].chomp, date: Time.at(rawtime.to_i)}
+      {title: title, url: url, date: date}
 
     end
 
     puts 'a3: ' + a3.inspect if @debug
+    
+    def a3.to_dx()
+      Dynarex.new('results/result(title, url, date)').import(self)
+    end
 
     return a3
 
   end
   
-  def tag_search(keywords)
-    a = @a.flat_map {|x| x.split(/#/,2).last.split(/\s*#/)}
-    a.grep(/^#{keywords}/i).map(&:downcase).uniq
-  end
-  
-  private
-  
-  def read(source)
-
-    dx = Dynarex.new(source)
-
-    dx.all.map do |x|
-      "%d %s %s" % [Time.parse(x.created).to_i, x.title, x.url]
-    end.join("\n")
-    
-  end
+  def tag_search(keywords)    
+    r = @indexer.lookup *keywords.split(/[\W]+(?=[\w]+)/).map {|x| "#" + x}
+    r.map {|x| x.to_s[1..-1]}
+  end  
 
 end
