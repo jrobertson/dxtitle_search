@@ -7,7 +7,7 @@ require 'indexer101'
 
 class DxTitleSearch
 
-  def initialize(obj=nil, sources: nil, debug: false)
+  def initialize(obj=nil, sources: nil, level: 1, debug: false)
 
     @debug = debug
     @indexer = Indexer101.new debug: debug
@@ -15,21 +15,25 @@ class DxTitleSearch
     s = if sources then
     
       dx = Dynarex.new(sources)      
-      @indexer.scan_dxindex dx.all.map(&:uri), level: 1
+      puts 'before scan_dxindex' if @debug
+      a = dx.all.map(&:uri)
+      puts 'a: ' + a.inspect if @debug
+      @indexer.scan_dxindex a, level: level
     
     elsif obj and obj.lines.length < 2 
 
-      @indexer.scan_dxindex  obj, level: 1
+      @indexer.scan_dxindex  obj, level: level
         
     end
   
-    @indexer.build
+    #jr230620 @indexer.build
 
   end
 
-  def search(keywords)    
+  def search(keywords, minchars: 3)    
 
-    a2 = @indexer.search keywords.split(/[\s:"!\?\(\)£]+(?=[\w#_'-]+)/)
+    a2 = @indexer.search keywords.split(/[\s:"!\?\(\)£]+(?=[\w#_'-]+)/), \
+        minchars: minchars
     # format each result as a Hash object
     a3 = a2.map do |date, title, url|
 
