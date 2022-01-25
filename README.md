@@ -4,7 +4,7 @@
     
     require 'dxtitle_search'
 
-    s = 'http://a0.jamesrobertson.eu/snippets/dynarex.xml'
+    s = 'http://a0.jamesrobertson.me.uk/snippets/dynarex.xml'
 
     dts = DxTitleSearch.new(s)
     result = dts.search('ssh mount')
